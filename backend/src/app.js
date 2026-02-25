@@ -1,5 +1,6 @@
 import express from "express"
 import cors from "cors"
+import rideRouter from "./routes/ride.route.js"
 
 const app = express()
 
@@ -13,5 +14,7 @@ app.get("/", (req, res) => {
 app.get("/health", (req, res) => {
     res.send("OK")
 })
+
+app.use("/api/rides", rideRouter)
 
 export default app
