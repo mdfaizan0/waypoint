@@ -6,7 +6,7 @@ import webhookRoutes from "./routes/webhook.route.js"
 const app = express()
 
 app.use(cors())
-app.use("/webhook", webhookRoutes)
+app.use("/webhooks", webhookRoutes)
 app.use(express.json())
 
 app.get("/", (req, res) => {
