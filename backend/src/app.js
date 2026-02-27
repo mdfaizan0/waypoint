@@ -1,10 +1,12 @@
 import express from "express"
 import cors from "cors"
 import rideRouter from "./routes/ride.route.js"
+import webhookRoutes from "./routes/webhook.route.js"
 
 const app = express()
 
 app.use(cors())
+app.use("/webhook", webhookRoutes)
 app.use(express.json())
 
 app.get("/", (req, res) => {

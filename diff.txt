@@ -1,0 +1,515 @@
+diff --git a/backend/package-lock.json b/backend/package-lock.json
+index edb6dc9..9ccc65a 100644
+--- a/backend/package-lock.json
++++ b/backend/package-lock.json
+@@ -12,7 +12,8 @@
+         "@supabase/supabase-js": "^2.97.0",
+         "cors": "^2.8.6",
+         "dotenv": "^17.3.1",
+-        "express": "^5.2.1"
++        "express": "^5.2.1",
++        "razorpay": "^2.9.6"
+       },
+       "devDependencies": {
+         "nodemon": "^3.1.14"
+@@ -149,6 +150,23 @@
+         "node": ">= 8"
+       }
+     },
++    "node_modules/asynckit": {
++      "version": "0.4.0",
++      "resolved": "https://registry.npmjs.org/asynckit/-/asynckit-0.4.0.tgz",
++      "integrity": "sha512-Oei9OH4tRh0YqU3GxhX79dM/mwVgvbZJaSNaRk+bshkj0S5cfHcgYakreBjrHwatXKbz+IoIdYLxrKim2MjW0Q==",
++      "license": "MIT"
++    },
++    "node_modules/axios": {
++      "version": "1.13.5",
++      "resolved": "https://registry.npmjs.org/axios/-/axios-1.13.5.tgz",
++      "integrity": "sha512-cz4ur7Vb0xS4/KUN0tPWe44eqxrIu31me+fbang3ijiNscE129POzipJJA6zniq2C/Z6sJCjMimjS8Lc/GAs8Q==",
++      "license": "MIT",
++      "dependencies": {
++        "follow-redirects": "^1.15.11",
++        "form-data": "^4.0.5",
++        "proxy-from-env": "^1.1.0"
++      }
++    },
+     "node_modules/balanced-match": {
+       "version": "4.0.4",
+       "resolved": "https://registry.npmjs.org/balanced-match/-/balanced-match-4.0.4.tgz",
+@@ -285,6 +303,18 @@
+         "fsevents": "~2.3.2"
+       }
+     },
++    "node_modules/combined-stream": {
++      "version": "1.0.8",
++      "resolved": "https://registry.npmjs.org/combined-stream/-/combined-stream-1.0.8.tgz",
++      "integrity": "sha512-FQN4MRfuJeHf7cBbBMJFXhKSDq+2kAArBlmRBvcvFE5BB1HZKXtSFASDhdlz9zOYwxh8lDdnvmMOe/+5cdoEdg==",
++      "license": "MIT",
++      "dependencies": {
++        "delayed-stream": "~1.0.0"
++      },
++      "engines": {
++        "node": ">= 0.8"
++      }
++    },
+     "node_modules/content-disposition": {
+       "version": "1.0.1",
+       "resolved": "https://registry.npmjs.org/content-disposition/-/content-disposition-1.0.1.tgz",
+@@ -359,6 +389,15 @@
+         }
+       }
+     },
++    "node_modules/delayed-stream": {
++      "version": "1.0.0",
++      "resolved": "https://registry.npmjs.org/delayed-stream/-/delayed-stream-1.0.0.tgz",
++      "integrity": "sha512-ZySD7Nf91aLB0RxL4KGrKHBXl7Eds1DAmEdcoVawXnLD7SDhpNgtuII2aAkg7a7QS41jxPSZ17p4VdGnMHk3MQ==",
++      "license": "MIT",
++      "engines": {
++        "node": ">=0.4.0"
++      }
++    },
+     "node_modules/depd": {
+       "version": "2.0.0",
+       "resolved": "https://registry.npmjs.org/depd/-/depd-2.0.0.tgz",
+@@ -439,6 +478,21 @@
+         "node": ">= 0.4"
+       }
+     },
++    "node_modules/es-set-tostringtag": {
++      "version": "2.1.0",
++      "resolved": "https://registry.npmjs.org/es-set-tostringtag/-/es-set-tostringtag-2.1.0.tgz",
++      "integrity": "sha512-j6vWzfrGVfyXxge+O0x5sh6cvxAog0a/4Rdd2K36zCMV5eJ+/+tOAngRO8cODMNWbVRdVlmGZQL2YS3yR8bIUA==",
++      "license": "MIT",
++      "dependencies": {
++        "es-errors": "^1.3.0",
++        "get-intrinsic": "^1.2.6",
++        "has-tostringtag": "^1.0.2",
++        "hasown": "^2.0.2"
++      },
++      "engines": {
++        "node": ">= 0.4"
++      }
++    },
+     "node_modules/escape-html": {
+       "version": "1.0.3",
+       "resolved": "https://registry.npmjs.org/escape-html/-/escape-html-1.0.3.tgz",
+@@ -531,6 +585,63 @@
+         "url": "https://opencollective.com/express"
+       }
+     },
++    "node_modules/follow-redirects": {
++      "version": "1.15.11",
++      "resolved": "https://registry.npmjs.org/follow-redirects/-/follow-redirects-1.15.11.tgz",
++      "integrity": "sha512-deG2P0JfjrTxl50XGCDyfI97ZGVCxIpfKYmfyrQ54n5FO/0gfIES8C/Psl6kWVDolizcaaxZJnTS0QSMxvnsBQ==",
++      "funding": [
++        {
++          "type": "individual",
++          "url": "https://github.com/sponsors/RubenVerborgh"
++        }
++      ],
++      "license": "MIT",
++      "engines": {
++        "node": ">=4.0"
++      },
++      "peerDependenciesMeta": {
++        "debug": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/form-data": {
++      "version": "4.0.5",
++      "resolved": "https://registry.npmjs.org/form-data/-/form-data-4.0.5.tgz",
++      "integrity": "sha512-8RipRLol37bNs2bhoV67fiTEvdTrbMUYcFTiy3+wuuOnUog2QBHCZWXDRijWQfAkhBj2Uf5UnVaiWwA5vdd82w==",
++      "license": "MIT",
++      "dependencies": {
++        "asynckit": "^0.4.0",
++        "combined-stream": "^1.0.8",
++        "es-set-tostringtag": "^2.1.0",
++        "hasown": "^2.0.2",
++        "mime-types": "^2.1.12"
++      },
++      "engines": {
++        "node": ">= 6"
++      }
++    },
++    "node_modules/form-data/node_modules/mime-db": {
++      "version": "1.52.0",
++      "resolved": "https://registry.npmjs.org/mime-db/-/mime-db-1.52.0.tgz",
++      "integrity": "sha512-sPU4uV7dYlvtWJxwwxHD0PuihVNiE7TyAbQ5SWxDCB9mUYvOgroQOwYQQOKPJ8CIbE+1ETVlOoK1UC2nU3gYvg==",
++      "license": "MIT",
++      "engines": {
++        "node": ">= 0.6"
++      }
++    },
++    "node_modules/form-data/node_modules/mime-types": {
++      "version": "2.1.35",
++      "resolved": "https://registry.npmjs.org/mime-types/-/mime-types-2.1.35.tgz",
++      "integrity": "sha512-ZDY+bPm5zTTF+YpCrAU9nK0UgICYPT0QtT1NZWFv4s++TNkcgVaT0g6+4R2uI4MjQjzysHB1zxuWL50hzaeXiw==",
++      "license": "MIT",
++      "dependencies": {
++        "mime-db": "1.52.0"
++      },
++      "engines": {
++        "node": ">= 0.6"
++      }
++    },
+     "node_modules/forwarded": {
+       "version": "0.2.0",
+       "resolved": "https://registry.npmjs.org/forwarded/-/forwarded-0.2.0.tgz",
+@@ -657,6 +768,21 @@
+         "url": "https://github.com/sponsors/ljharb"
+       }
+     },
++    "node_modules/has-tostringtag": {
++      "version": "1.0.2",
++      "resolved": "https://registry.npmjs.org/has-tostringtag/-/has-tostringtag-1.0.2.tgz",
++      "integrity": "sha512-NqADB8VjPFLM2V0VvHUewwwsw0ZWBaIdgo+ieHtK3hasLz4qeCRjYcqfB6AQrBggRKppKF8L52/VqdVsO47Dlw==",
++      "license": "MIT",
++      "dependencies": {
++        "has-symbols": "^1.0.3"
++      },
++      "engines": {
++        "node": ">= 0.4"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/ljharb"
++      }
++    },
+     "node_modules/hasown": {
+       "version": "2.0.2",
+       "resolved": "https://registry.npmjs.org/hasown/-/hasown-2.0.2.tgz",
+@@ -1000,6 +1126,12 @@
+         "node": ">= 0.10"
+       }
+     },
++    "node_modules/proxy-from-env": {
++      "version": "1.1.0",
++      "resolved": "https://registry.npmjs.org/proxy-from-env/-/proxy-from-env-1.1.0.tgz",
++      "integrity": "sha512-D+zkORCbA9f1tdWRK0RaCR3GPv50cMxcrz4X8k5LTSUD1Dkw47mKJEZQNunItRTkWwgtaUSo1RVFRIG9ZXiFYg==",
++      "license": "MIT"
++    },
+     "node_modules/pstree.remy": {
+       "version": "1.1.8",
+       "resolved": "https://registry.npmjs.org/pstree.remy/-/pstree.remy-1.1.8.tgz",
+@@ -1046,6 +1178,15 @@
+         "node": ">= 0.10"
+       }
+     },
++    "node_modules/razorpay": {
++      "version": "2.9.6",
++      "resolved": "https://registry.npmjs.org/razorpay/-/razorpay-2.9.6.tgz",
++      "integrity": "sha512-zsHAQzd6e1Cc6BNoCNZQaf65ElL6O6yw0wulxmoG5VQDr363fZC90Mp1V5EktVzG45yPyNomNXWlf4cQ3622gQ==",
++      "license": "MIT",
++      "dependencies": {
++        "axios": "^1.6.8"
++      }
++    },
+     "node_modules/readdirp": {
+       "version": "3.6.0",
+       "resolved": "https://registry.npmjs.org/readdirp/-/readdirp-3.6.0.tgz",
+diff --git a/backend/package.json b/backend/package.json
+index 2a023ae..07d49db 100644
+--- a/backend/package.json
++++ b/backend/package.json
+@@ -16,7 +16,8 @@
+     "@supabase/supabase-js": "^2.97.0",
+     "cors": "^2.8.6",
+     "dotenv": "^17.3.1",
+-    "express": "^5.2.1"
++    "express": "^5.2.1",
++    "razorpay": "^2.9.6"
+   },
+   "devDependencies": {
+     "nodemon": "^3.1.14"
+diff --git a/backend/src/app.js b/backend/src/app.js
+index 5b1a9ae..35b7e78 100644
+--- a/backend/src/app.js
++++ b/backend/src/app.js
+@@ -1,10 +1,12 @@
+ import express from "express"
+ import cors from "cors"
+ import rideRouter from "./routes/ride.route.js"
++import webhookRoutes from "./routes/webhook.route.js"
+ 
+ const app = express()
+ 
+ app.use(cors())
++app.use("/webhook", webhookRoutes)
+ app.use(express.json())
+ 
+ app.get("/", (req, res) => {
+diff --git a/backend/src/controllers/ride.controller.js b/backend/src/controllers/ride.controller.js
+index ad9c7b0..e6b99e0 100644
+--- a/backend/src/controllers/ride.controller.js
++++ b/backend/src/controllers/ride.controller.js
+@@ -1,4 +1,5 @@
+ import { supabase } from "../config/supabase.js"
++import { razorpay } from "../config/razorpay.js"
+ 
+ export async function createRide(req, res) {
+     const { rider_id, pickup_location, dropoff_location, pickup_lat, pickup_lng, dropoff_lat, dropoff_lng } = req.body
+@@ -66,6 +67,7 @@ export async function acceptRide(req, res) {
+             .update({
+                 status: "ACCEPTED",
+                 driver_id: req.user.id,
++                otp_code: Math.floor(1000 + Math.random() * (10000 - 1000)).toString(),
+                 accepted_at: new Date().toISOString()
+             })
+             .eq("id", id)
+@@ -84,37 +86,212 @@ export async function acceptRide(req, res) {
+             return res.status(400).json({ success: false, message: "Ride unavailable for acceptance" })
+         }
+ 
+-        return res.status(200).json({ success: true, ride })
++        const { otp_code, ...cleanedRide } = ride
++
++        return res.status(200).json({ success: true, ride: cleanedRide })
+     } catch (error) {
+         console.error("Error accepting ride:", error)
+         return res.status(500).json({ success: false, message: "Error accepting ride", error: error.message })
+     }
+ }
+ 
+-/**
+- * rider_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+-  driver_id TEXT REFERENCES users(id) ON DELETE SET NULL,
++export async function enrouteRide(req, res) {
++    const { id } = req.params
++    try {
++        const { data: ride, error: rideError } = await supabase
++            .from("rides")
++            .update({
++                status: "DRIVER_EN_ROUTE"
++            })
++            .eq("id", id)
++            .eq("status", "ACCEPTED")
++            .eq("driver_id", req.user.id)
++            .neq("rider_id", req.user.id)
++            .select()
++            .single()
+ 
+-  pickup_location TEXT NOT NULL,
+-  dropoff_location TEXT NOT NULL,
++        if (rideError) {
++            console.error("Error enrouting ride:", rideError)
++            return res.status(500).json({ success: false, message: "Failed to enroute ride" })
++        }
+ 
+-  pickup_lat DOUBLE PRECISION,
+-  pickup_lng DOUBLE PRECISION,
+-  dropoff_lat DOUBLE PRECISION,
+-  dropoff_lng DOUBLE PRECISION,
++        if (!ride) {
++            return res.status(400).json({ success: false, message: "Ride not found or not in ACCEPTED state" })
++        }
+ 
+-  fare NUMERIC NOT NULL,
++        const { otp_code, ...cleanedRide } = ride
+ 
+-  status ride_status NOT NULL DEFAULT 'REQUESTED',
+-  payment_status payment_status NOT NULL DEFAULT 'PENDING',
++        return res.status(200).json({ success: true, ride: cleanedRide })
++    } catch (error) {
++        console.error("Error enrouting ride:", error)
++        return res.status(500).json({ success: false, message: "Failed to enroute ride", error: error.message })
++    }
++}
+ 
+-  otp_code TEXT,
++export async function startRide(req, res) {
++    const { id } = req.params
++    const { otp } = req.body
++    try {
++        const { data: ride, error: rideError } = await supabase
++            .from("rides")
++            .update({
++                status: "STARTED",
++                otp_code: null,
++                started_at: new Date().toISOString()
++            })
++            .eq("id", id)
++            .eq("status", "DRIVER_EN_ROUTE")
++            .eq("driver_id", req.user.id)
++            .eq("otp_code", otp)
++            .neq("rider_id", req.user.id)
++            .select()
++            .single()
++
++        if (rideError) {
++            console.error("Error starting ride:", rideError)
++            return res.status(500).json({ success: false, message: "Failed to start ride" })
++        }
++
++        if (!ride) {
++            return res.status(400).json({ success: false, message: "Ride not found or not in DRIVER_EN_ROUTE state" })
++        }
++
++        const { otp_code, ...cleanedRide } = ride
++
++        return res.status(200).json({ success: true, ride: cleanedRide })
++    } catch (error) {
++        console.error("Error starting ride:", error)
++        return res.status(500).json({ success: false, message: "Failed to start ride", error: error.message })
++    }
++}
++
++export async function completeRide(req, res) {
++    const { id } = req.params
++    try {
++        const { data: ride, error: rideError } = await supabase
++            .from("rides")
++            .update({
++                status: "COMPLETED",
++                completed_at: new Date().toISOString()
++            })
++            .eq("id", id)
++            .eq("status", "STARTED")
++            .eq("driver_id", req.user.id)
++            .is("otp_code", null)
++            .neq("rider_id", req.user.id)
++            .select()
++            .single()
++
++        if (rideError) {
++            console.error("Error completing ride:", rideError)
++            return res.status(500).json({ success: false, message: "Failed to complete ride" })
++        }
++
++        if (!ride) {
++            return res.status(400).json({ success: false, message: "Ride not found or not in STARTED state" })
++        }
+ 
+-  requested_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+-  accepted_at TIMESTAMP WITH TIME ZONE,
+-  started_at TIMESTAMP WITH TIME ZONE,
+-  completed_at TIMESTAMP WITH TIME ZONE,
++        // TODO: Handle payment
+ 
+-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+- */
+\ No newline at end of file
++        return res.status(200).json({ success: true, ride })
++    } catch (error) {
++        console.error("Error completing ride:", error)
++        return res.status(500).json({ success: false, message: "Failed to complete ride", error: error.message })
++    }
++}
++
++export async function payForRide(req, res) {
++    const { id } = req.params
++    try {
++        const { data: ride, error: rideError } = await supabase
++            .from("rides")
++            .select()
++            .eq("id", id)
++            .eq("status", "COMPLETED")
++            .eq("rider_id", req.user.id)
++            .eq("payment_status", "PENDING")
++            .eq("payment_method", "RAZORPAY")
++            .single()
++
++        if (rideError) {
++            console.error("Error completing ride:", rideError)
++            return res.status(500).json({ success: false, message: "Failed to complete ride" })
++        }
++
++        if (!ride) {
++            return res.status(400).json({ success: false, message: "Ride not found or not in STARTED state" })
++        }
++
++        const order = await razorpay.orders.create({
++            amount: ride.fare * 100,
++            currency: "INR",
++            receipt: `receipt_${ride.id}`,
++            notes: {
++                "ride_id": ride.id,
++                "rider_id": ride.rider_id,
++                "driver_id": ride.driver_id
++            }
++        })
++
++        const { error: processingError } = await supabase
++            .from("rides")
++            .update({
++                payment_status: "PROCESSING",
++                razorpay_order_id: order.id
++            })
++            .eq("id", id)
++            .eq("status", "COMPLETED")
++            .eq("rider_id", req.user.id)
++            .eq("payment_status", "PENDING")
++            .eq("payment_method", "RAZORPAY")
++            .select()
++            .single()
++
++        if (processingError) {
++            console.error("Error processing payment for ride:", processingError)
++            return res.status(500).json({ success: false, message: "Failed to process payment for ride" })
++        }
++
++        if (!ride) {
++            return res.status(400).json({ success: false, message: "Ride not found or not in COMPLETED state" })
++        }
++
++        // TODO: RazorPay payment success/failure
++    } catch (error) {
++        console.error("Error processing payment for ride:", error)
++        return res.status(500).json({ success: false, message: "Failed to process payment for ride", error: error.message })
++    }
++}
++
++export async function markAsPaid(req, res) {
++    const { id } = req.params
++    try {
++        const { data: ride, error: rideError } = await supabase
++            .from("rides")
++            .update({
++                payment_status: "PAID"
++            })
++            .eq("id", id)
++            .eq("status", "COMPLETED")
++            .eq("driver_id", req.user.id)
++            .eq("payment_status", "PENDING")
++            .eq("payment_method", "CASH")
++            .neq("rider_id", req.user.id)
++            .select()
++            .single()
++
++        if (rideError) {
++            console.error("Error marking ride as paid:", rideError)
++            return res.status(500).json({ success: false, message: "Failed to mark ride as paid" })
++        }
++
++        if (!ride) {
++            return res.status(400).json({ success: false, message: "Ride not found or not in COMPLETED state" })
++        }
++
++        return res.status(200).json({ success: true, ride })
++    } catch (error) {
++        console.error("Error marking ride as paid:", error)
++        return res.status(500).json({ success: false, message: "Failed to mark ride as paid", error: error.message })
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/routes/ride.route.js b/backend/src/routes/ride.route.js
+index 0e75627..9a35557 100644
+--- a/backend/src/routes/ride.route.js
++++ b/backend/src/routes/ride.route.js
+@@ -7,9 +7,11 @@ const router = express.Router()
+ router.post('/', rideController.createRide);
+ router.post('/:id/search', rideController.searchRide);
+ router.post('/:id/accept', authMiddleware, isDriver, rideController.acceptRide);
+-// router.post('/:id/enroute', rideController.enrouteRide);
+-// router.post('/:id/start', rideController.startRide);
+-// router.post('/:id/complete', rideController.completeRide);
++router.post('/:id/enroute', authMiddleware, isDriver, rideController.enrouteRide);
++router.post('/:id/start', authMiddleware, isDriver, rideController.startRide);
++router.post('/:id/complete', rideController.completeRide);
++router.post('/:id/pay', rideController.payForRide);
++router.post('/:id/mark-paid', authMiddleware, isDriver, rideController.markAsPaid);
+ // router.post('/:id/cancel', rideController.cancelRide);
+ 
+ export default router;
+\ No newline at end of file
