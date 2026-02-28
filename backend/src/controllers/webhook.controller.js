@@ -17,6 +17,7 @@ export async function handleRazorpayWebhook(req, res) {
         }
 
         const event = JSON.parse(rawBody.toString())
+        console.log("Webhook event:", event.event)
 
         if (event.event === "payment.captured") {
             const payment = event.payload.payment.entity
@@ -27,6 +28,7 @@ export async function handleRazorpayWebhook(req, res) {
                     payment_status: "PAID",
                     razorpay_payment_id: payment.id
                 })
+                .eq("payment_method", "RAZORPAY")
                 .eq("payment_status", "PROCESSING")
                 .eq("razorpay_order_id", payment.order_id)
 
@@ -44,6 +46,7 @@ export async function handleRazorpayWebhook(req, res) {
                 .update({
                     payment_status: "FAILED"
                 })
+                .eq("payment_method", "RAZORPAY")
                 .eq("payment_status", "PROCESSING")
                 .eq("razorpay_order_id", payment.order_id)
         }

@@ -191,8 +191,6 @@ export async function completeRide(req, res) {
             return res.status(400).json({ success: false, message: "Ride not found or not in STARTED state" })
         }
 
-        // TODO: Handle payment
-
         return res.status(200).json({ success: true, ride })
     } catch (error) {
         console.error("Error completing ride:", error)
@@ -203,46 +201,18 @@ export async function completeRide(req, res) {
 export async function payForRide(req, res) {
     const { id } = req.params
     try {
-        const { data: ride, error: rideError } = await supabase
-            .from("rides")
-            .select()
-            .eq("id", id)
-            .eq("status", "COMPLETED")
-            .eq("rider_id", req.user.id)
-            .eq("payment_status", "PENDING")
-            .eq("payment_method", "RAZORPAY")
-            .single()
 
-        if (rideError) {
-            console.error("Error completing ride:", rideError)
-            return res.status(500).json({ success: false, message: "Failed to complete ride" })
-        }
-
-        if (!ride) {
-            return res.status(400).json({ success: false, message: "Ride not found or not in STARTED state" })
-        }
-
-        const order = await razorpay.orders.create({
-            amount: ride.fare * 100,
-            currency: "INR",
-            receipt: `receipt_${ride.id}`,
-            notes: {
-                "ride_id": ride.id,
-                "rider_id": ride.rider_id,
-                "driver_id": ride.driver_id
-            }
-        })
-
-        const { error: processingError } = await supabase
+        const { data: ride, error: processingError } = await supabase
             .from("rides")
             .update({
-                payment_status: "PROCESSING",
-                razorpay_order_id: order.id
+                payment_status: "PROCESSING"
             })
             .eq("id", id)
             .eq("status", "COMPLETED")
             .eq("rider_id", req.user.id)
-            .eq("payment_status", "PENDING")
+            .or(
+                "payment_status.eq.PENDING,payment_status.eq.FAILED,and(payment_status.eq.PROCESSING,razorpay_order_id.is.null)"
+            )
             .eq("payment_method", "RAZORPAY")
             .select()
             .single()
@@ -256,7 +226,51 @@ export async function payForRide(req, res) {
             return res.status(400).json({ success: false, message: "Ride not found or not in COMPLETED state" })
         }
 
-        // TODO: RazorPay payment success/failure
+        let order;
+        try {
+            order = await razorpay.orders.create({
+                amount: ride.fare * 100,
+                currency: "INR",
+                receipt: `receipt_${ride.id}`,
+                notes: {
+                    "ride_id": ride.id,
+                    "rider_id": ride.rider_id,
+                    "driver_id": ride.driver_id
+                }
+            })
+        } catch (error) {
+            await supabase
+                .from("rides")
+                .update({ payment_status: "PENDING" })
+                .eq("id", id)
+                .eq("payment_status", "PROCESSING")
+
+            return res.status(500).json({ success: false, message: "Failed to create payment order" })
+        }
+
+        const { error: orderUpdateError } = await supabase
+            .from("rides")
+            .update({
+                razorpay_order_id: order.id
+            })
+            .eq("id", id)
+            .eq("status", "COMPLETED")
+            .eq("rider_id", req.user.id)
+            .eq("payment_method", "RAZORPAY")
+            .eq("payment_status", "PROCESSING");
+
+        if (orderUpdateError) {
+            console.error("Error updating order for ride:", orderUpdateError)
+            return res.status(500).json({ success: false, message: "Failed to update order for ride" })
+        }
+
+        return res.status(200).json({
+            success: true,
+            order_id: order.id,
+            amount: order.amount,
+            currency: order.currency,
+            key_id: process.env.RAZORPAY_KEY_ID
+        });
     } catch (error) {
         console.error("Error processing payment for ride:", error)
         return res.status(500).json({ success: false, message: "Failed to process payment for ride", error: error.message })
@@ -293,5 +307,66 @@ export async function markAsPaid(req, res) {
     } catch (error) {
         console.error("Error marking ride as paid:", error)
         return res.status(500).json({ success: false, message: "Failed to mark ride as paid", error: error.message })
+    }
+}
+
+export async function cancelRide(req, res) {
+    const { id } = req.params
+    try {
+        // Attempt 1: Cancel as rider
+        const { data: riderCancelledRide, error: riderError } = await supabase
+            .from("rides")
+            .update({
+                status: "CANCELLED",
+                cancelled_at: new Date().toISOString(),
+                otp_code: null
+            })
+            .eq("id", id)
+            .eq("rider_id", req.user.id)
+            .in("status", ["REQUESTED", "SEARCHING", "ACCEPTED", "DRIVER_EN_ROUTE"])
+            .select()
+            .maybeSingle()
+
+        if (riderError) {
+            console.error("Error cancelling ride as rider:", riderError)
+            return res.status(500).json({ success: false, message: "Failed to cancel ride" })
+        }
+
+        if (riderCancelledRide) {
+            const { otp_code, ...cleanedRide } = riderCancelledRide
+            return res.status(200).json({ success: true, ride: cleanedRide })
+        }
+
+        // Attempt 2: Cancel as driver
+        const { data: driverCancelledRide, error: driverError } = await supabase
+            .from("rides")
+            .update({
+                status: "SEARCHING",
+                driver_id: null,
+                otp_code: null,
+                accepted_at: null,
+                started_at: null
+            })
+            .eq("id", id)
+            .eq("driver_id", req.user.id)
+            .in("status", ["ACCEPTED", "DRIVER_EN_ROUTE"])
+            .neq("rider_id", req.user.id)
+            .select()
+            .maybeSingle()
+
+        if (driverError) {
+            console.error("Error cancelling ride as driver:", driverError)
+            return res.status(500).json({ success: false, message: "Failed to cancel ride" })
+        }
+
+        if (driverCancelledRide) {
+            const { otp_code, ...cleanedRide } = driverCancelledRide
+            return res.status(200).json({ success: true, ride: cleanedRide })
+        }
+
+        return res.status(400).json({ success: false, message: "Ride not found or not cancellable" })
+    } catch (error) {
+        console.error("Error cancelling ride:", error)
+        return res.status(500).json({ success: false, message: "Failed to cancel ride", error: error.message })
     }
 }
