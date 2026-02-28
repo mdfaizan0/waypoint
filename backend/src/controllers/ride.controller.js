@@ -25,7 +25,7 @@ export async function createRide(req, res) {
             return res.status(500).json({ success: false, message: "Failed to create ride" })
         }
 
-        return res.status(200).json({ success: true, ride: data })
+        return res.status(200).json({ success: true, message: "Ride created successfully", ride: data })
     } catch (error) {
         console.error("Error creating ride:", error);
         return res.status(500).json({ success: false, message: "Error creating ride", error: error.message });
@@ -52,7 +52,7 @@ export async function searchRide(req, res) {
             return res.status(400).json({ success: false, message: "Ride not found or not in REQUESTED state" })
         }
 
-        return res.status(200).json({ success: true, ride })
+        return res.status(200).json({ success: true, message: "Ride searched successfully", ride })
     } catch (error) {
         console.error("Error searching ride:", error)
         return res.status(500).json({ success: false, message: "Error searching ride", error: error.message })
@@ -77,6 +77,7 @@ export async function acceptRide(req, res) {
             .select()
             .single()
 
+
         if (rideError) {
             console.error("Error accepting ride:", rideError)
             return res.status(500).json({ success: false, message: "Failed to accept ride" })
@@ -86,9 +87,40 @@ export async function acceptRide(req, res) {
             return res.status(400).json({ success: false, message: "Ride unavailable for acceptance" })
         }
 
+        const { data: driver, error: driverError } = await supabase
+            .from("driver_profiles")
+            .update({
+                is_available: false,
+                updated_at: new Date().toISOString()
+            })
+            .eq("user_id", req.user.id)
+            .eq("is_available", true)
+            .eq("is_online", true)
+            .select()
+            .single()
+
+        if (driverError || !driver) {
+            await supabase
+                .from("rides")
+                .update({
+                    status: "SEARCHING",
+                    driver_id: null,
+                    otp_code: null,
+                    accepted_at: null
+                })
+                .eq("id", id)
+                .eq("status", "ACCEPTED")
+                .is("driver_id", req.user.id)
+                .neq("rider_id", req.user.id)
+                .select()
+                .single()
+            console.error("Error accepting ride:", driverError)
+            return res.status(500).json({ success: false, message: "Failed to accept ride or driver not found" })
+        }
+
         const { otp_code, ...cleanedRide } = ride
 
-        return res.status(200).json({ success: true, ride: cleanedRide })
+        return res.status(200).json({ success: true, message: "Ride accepted successfully", ride: cleanedRide })
     } catch (error) {
         console.error("Error accepting ride:", error)
         return res.status(500).json({ success: false, message: "Error accepting ride", error: error.message })
@@ -121,7 +153,7 @@ export async function enrouteRide(req, res) {
 
         const { otp_code, ...cleanedRide } = ride
 
-        return res.status(200).json({ success: true, ride: cleanedRide })
+        return res.status(200).json({ success: true, message: "Ride enrouted successfully", ride: cleanedRide })
     } catch (error) {
         console.error("Error enrouting ride:", error)
         return res.status(500).json({ success: false, message: "Failed to enroute ride", error: error.message })
@@ -158,7 +190,7 @@ export async function startRide(req, res) {
 
         const { otp_code, ...cleanedRide } = ride
 
-        return res.status(200).json({ success: true, ride: cleanedRide })
+        return res.status(200).json({ success: true, message: "Ride started successfully", ride: cleanedRide })
     } catch (error) {
         console.error("Error starting ride:", error)
         return res.status(500).json({ success: false, message: "Failed to start ride", error: error.message })
@@ -191,7 +223,27 @@ export async function completeRide(req, res) {
             return res.status(400).json({ success: false, message: "Ride not found or not in STARTED state" })
         }
 
-        return res.status(200).json({ success: true, ride })
+        const { data: driver, error: driverError } = await supabase
+            .from("driver_profiles")
+            .update({
+                is_available: true,
+                updated_at: new Date().toISOString()
+            })
+            .eq("user_id", req.user.id)
+            .eq("is_available", false)
+            .select()
+            .single()
+
+        if (driverError) {
+            console.error("Error accepting ride:", driverError)
+            return res.status(500).json({ success: false, message: "Failed to accept ride" })
+        }
+
+        if (!driver) {
+            return res.status(400).json({ success: false, message: "Driver not found or not available" })
+        }
+
+        return res.status(200).json({ success: true, message: "Ride completed successfully", ride })
     } catch (error) {
         console.error("Error completing ride:", error)
         return res.status(500).json({ success: false, message: "Failed to complete ride", error: error.message })
@@ -266,6 +318,7 @@ export async function payForRide(req, res) {
 
         return res.status(200).json({
             success: true,
+            message: "Payment order created successfully",
             order_id: order.id,
             amount: order.amount,
             currency: order.currency,
@@ -303,7 +356,7 @@ export async function markAsPaid(req, res) {
             return res.status(400).json({ success: false, message: "Ride not found or not in COMPLETED state" })
         }
 
-        return res.status(200).json({ success: true, ride })
+        return res.status(200).json({ success: true, message: "Ride marked as paid successfully", ride })
     } catch (error) {
         console.error("Error marking ride as paid:", error)
         return res.status(500).json({ success: false, message: "Failed to mark ride as paid", error: error.message })
@@ -333,8 +386,30 @@ export async function cancelRide(req, res) {
         }
 
         if (riderCancelledRide) {
+            if (riderCancelledRide.driver_id) {
+                const { data: makeDriverAvailable, error: makeDriverAvailableError } = await supabase
+                    .from("driver_profiles")
+                    .update({
+                        is_available: true,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq("user_id", riderCancelledRide.driver_id)
+                    .eq("is_available", false)
+                    .eq("is_online", true)
+                    .select()
+                    .single()
+
+                if (makeDriverAvailableError) {
+                    console.error("Error making driver available:", makeDriverAvailableError)
+                    return res.status(500).json({ success: false, message: "Failed to make driver available" })
+                }
+
+                if (!makeDriverAvailable) {
+                    return res.status(400).json({ success: false, message: "Driver not found or not available" })
+                }
+            }
             const { otp_code, ...cleanedRide } = riderCancelledRide
-            return res.status(200).json({ success: true, ride: cleanedRide })
+            return res.status(200).json({ success: true, message: "Ride cancelled by the rider", ride: cleanedRide })
         }
 
         // Attempt 2: Cancel as driver
@@ -360,8 +435,28 @@ export async function cancelRide(req, res) {
         }
 
         if (driverCancelledRide) {
+            const { data: makeDriverAvailable, error: makeDriverAvailableError } = await supabase
+                .from("driver_profiles")
+                .update({
+                    is_available: true,
+                    updated_at: new Date().toISOString()
+                })
+                .eq("user_id", req.user.id)
+                .eq("is_available", false)
+                .eq("is_online", true)
+                .select()
+                .single()
+
+            if (makeDriverAvailableError) {
+                console.error("Error making driver available:", makeDriverAvailableError)
+                return res.status(500).json({ success: false, message: "Failed to make driver available" })
+            }
+
+            if (!makeDriverAvailable) {
+                return res.status(400).json({ success: false, message: "Driver not found or not available" })
+            }
             const { otp_code, ...cleanedRide } = driverCancelledRide
-            return res.status(200).json({ success: true, ride: cleanedRide })
+            return res.status(200).json({ success: true, message: "Ride cancelled by the driver", ride: cleanedRide })
         }
 
         return res.status(400).json({ success: false, message: "Ride not found or not cancellable" })

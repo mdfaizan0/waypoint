@@ -2,6 +2,7 @@ import express from "express"
 import cors from "cors"
 import rideRouter from "./routes/ride.route.js"
 import webhookRoutes from "./routes/webhook.route.js"
+import driverRouter from "./routes/driver.route.js"
 
 const app = express()
 
@@ -18,5 +19,6 @@ app.get("/health", (req, res) => {
 })
 
 app.use("/api/rides", rideRouter)
+app.use("/api/driver", driverRouter)
 
 export default app

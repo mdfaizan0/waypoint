@@ -51,7 +51,7 @@ export async function handleRazorpayWebhook(req, res) {
                 .eq("razorpay_order_id", payment.order_id)
         }
 
-        return res.status(200).json({ message: "Payment updated successfully" })
+        return res.status(200).json({ success: true, message: "Payment updated successfully" })
     } catch (error) {
         console.error("Error handling razorpay webhook:", error)
         return res.status(500).json({ success: false, message: "Failed to handle razorpay webhook", error: error.message })
