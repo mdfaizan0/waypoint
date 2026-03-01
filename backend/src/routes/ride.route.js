@@ -7,6 +7,7 @@ const router = express.Router()
 router.post('/', authMiddleware, rideController.createRide);
 router.post('/:id/search', authMiddleware, rideController.searchRide);
 router.post('/:id/accept', authMiddleware, isDriver, rideController.acceptRide);
+router.post('/:id/reject', authMiddleware, isDriver, rideController.rejectRide);
 router.post('/:id/enroute', authMiddleware, isDriver, rideController.enrouteRide);
 router.post('/:id/start', authMiddleware, isDriver, rideController.startRide);
 router.post('/:id/complete', authMiddleware, rideController.completeRide);

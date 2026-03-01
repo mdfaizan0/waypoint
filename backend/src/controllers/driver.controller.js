@@ -48,6 +48,7 @@ export async function goOffline(req, res) {
             .from("driver_profiles")
             .update({
                 is_online: false,
+                is_available: false,
                 updated_at: new Date().toISOString()
             })
             .eq("user_id", user_id)

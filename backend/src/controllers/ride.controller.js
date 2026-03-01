@@ -52,7 +52,46 @@ export async function searchRide(req, res) {
             return res.status(400).json({ success: false, message: "Ride not found or not in REQUESTED state" })
         }
 
-        return res.status(200).json({ success: true, message: "Ride searched successfully", ride })
+        const { data: nearbyDriver, error: nearbyDriverError } = await supabase
+            .rpc("find_nearby_drivers", {
+                pickup_lat: ride.pickup_lat,
+                pickup_lng: ride.pickup_lng,
+                radius_meters: 5000
+            })
+
+        if (nearbyDriverError) {
+            console.error("Error finding nearby drivers:", nearbyDriverError)
+            return res.status(500).json({ success: false, message: "Failed to find nearby drivers" })
+        }
+
+        if (!nearbyDriver || nearbyDriver.length === 0) {
+            return res.status(400).json({ success: false, message: "Ride is searching but no nearby drivers found" })
+        }
+
+        const expiryTime = new Date(Date.now() + 30000).toISOString();
+        const dispatchRows = nearbyDriver.map(d => ({
+            ride_id: ride.id,
+            driver_id: d.user_id,
+            expires_at: expiryTime
+        }))
+
+        const { error: expiredDispatchesError } = await supabase.rpc('expire_dispatches');
+
+        if (expiredDispatchesError) {
+            console.error("Error expiring dispatches:", expiredDispatchesError)
+            return res.status(500).json({ success: false, message: "Failed to expire dispatches" })
+        }
+
+        const { error: dispatchError } = await supabase
+            .from("ride_dispatches")
+            .insert(dispatchRows)
+
+        if (dispatchError) {
+            console.error("Error dispatching ride:", dispatchError)
+            return res.status(500).json({ success: false, message: "Failed to dispatch ride" })
+        }
+
+        return res.status(200).json({ success: true, message: "Ride dispatched to nearby drivers", ride })
     } catch (error) {
         console.error("Error searching ride:", error)
         return res.status(500).json({ success: false, message: "Error searching ride", error: error.message })
@@ -62,6 +101,21 @@ export async function searchRide(req, res) {
 export async function acceptRide(req, res) {
     const { id } = req.params
     try {
+        const { data: dispatch } = await supabase
+            .from("ride_dispatches")
+            .select()
+            .eq("ride_id", id)
+            .eq("driver_id", req.user.id)
+            .eq("status", "PENDING")
+            .maybeSingle()
+
+        if (!dispatch || dispatch.expires_at < new Date().toISOString()) {
+            return res.status(400).json({
+                success: false,
+                message: "Dispatch expired"
+            });
+        }
+
         const { data: ride, error: rideError } = await supabase
             .from("rides")
             .update({
@@ -77,7 +131,6 @@ export async function acceptRide(req, res) {
             .select()
             .single()
 
-
         if (rideError) {
             console.error("Error accepting ride:", rideError)
             return res.status(500).json({ success: false, message: "Failed to accept ride" })
@@ -85,6 +138,28 @@ export async function acceptRide(req, res) {
 
         if (!ride) {
             return res.status(400).json({ success: false, message: "Ride unavailable for acceptance" })
+        }
+
+        const { error: expiredDispatchesError } = await supabase
+            .from("ride_dispatches")
+            .update({ status: "EXPIRED" })
+            .eq("ride_id", id)
+            .neq("driver_id", req.user.id);
+
+        if (expiredDispatchesError) {
+            console.error("Error expiring dispatches:", expiredDispatchesError)
+            return res.status(500).json({ success: false, message: "Failed to expire dispatches" })
+        }
+
+        const { error: acceptDispatchError } = await supabase
+            .from("ride_dispatches")
+            .update({ status: "ACCEPTED" })
+            .eq("ride_id", id)
+            .eq("driver_id", req.user.id);
+
+        if (acceptDispatchError) {
+            console.error("Error accepting dispatch:", acceptDispatchError)
+            return res.status(500).json({ success: false, message: "Failed to accept dispatch" })
         }
 
         const { data: driver, error: driverError } = await supabase
@@ -124,6 +199,35 @@ export async function acceptRide(req, res) {
     } catch (error) {
         console.error("Error accepting ride:", error)
         return res.status(500).json({ success: false, message: "Error accepting ride", error: error.message })
+    }
+}
+
+export async function rejectRide(req, res) {
+    const { id } = req.params
+    try {
+        const now = new Date().toISOString()
+
+        const { data: dispatch, error: dispatchError } = await supabase
+            .from("ride_dispatches")
+            .update({
+                status: "REJECTED"
+            })
+            .eq("ride_id", id)
+            .eq("driver_id", req.user.id)
+            .eq("status", "PENDING")
+            .gt("expires_at", now)
+            .select()
+            .single()
+
+        if (dispatchError || !dispatch) {
+            console.error("Error rejecting ride:", dispatchError)
+            return res.status(500).json({ success: false, message: "Dispatch not found or already expired" })
+        }
+
+        return res.status(200).json({ success: true, message: "Ride rejected successfully", dispatch })
+    } catch (error) {
+        console.error("Error rejecting ride:", error)
+        return res.status(500).json({ success: false, message: "Failed to reject ride", error: error.message })
     }
 }
 
