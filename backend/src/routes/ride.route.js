@@ -16,5 +16,6 @@ router.post('/:id/pay', authMiddleware, rideController.payForRide);
 router.post('/:id/mark-paid', authMiddleware, isDriver, rideController.markAsPaid);
 
 router.post('/:id/cancel', authMiddleware, rideController.cancelRide);
+router.post("/:id/review", authMiddleware, rideController.reviewRide)
 
 export default router;

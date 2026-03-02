@@ -569,3 +569,80 @@ export async function cancelRide(req, res) {
         return res.status(500).json({ success: false, message: "Failed to cancel ride", error: error.message })
     }
 }
+
+export async function reviewRide(req, res) {
+    const { id } = req.params
+    const { rating, comment } = req.body
+    const user_id = req.user.id
+    if (!rating) {
+        return res.status(400).json({ success: false, message: "Rating is required" })
+    }
+
+    if (typeof rating !== "number" || rating < 1 || rating > 5) {
+        return res.status(400).json({ success: false, message: "Rating must be between 1 and 5" })
+    }
+
+    if (comment && comment.trim().length > 500) {
+        return res.status(400).json({ success: false, message: "Comment must be less than 500 characters" })
+    }
+    try {
+        const { data: ride, error: rideError } = await supabase
+            .from("rides")
+            .select("*")
+            .eq("id", id)
+            .single()
+
+        if (rideError) {
+            console.error("Error reviewing ride:", rideError)
+            return res.status(500).json({ success: false, message: "Failed to review ride" })
+        }
+
+        if (!ride) {
+            return res.status(400).json({ success: false, message: "Ride not found or not in COMPLETED state" })
+        }
+
+        const isParticipant = ride.rider_id === user_id || ride.driver_id === user_id
+        const isReadyForReview = ride.status === "COMPLETED" && ride.payment_status === "PAID"
+
+        if (!isParticipant) {
+            return res.status(403).json({ success: false, message: "You are not a participant in this ride" })
+        }
+
+        if (!isReadyForReview) {
+            return res.status(403).json({ success: false, message: "Ride must be COMPLETED and PAID to leave a review" })
+        }
+
+
+        const reviewee_id = ride.rider_id === user_id ? ride.driver_id : ride.rider_id
+
+        if (!reviewee_id) {
+            return res.status(400).json({ success: false, message: "Invalid review target" })
+        }
+
+        const { data: review, error: reviewError } = await supabase
+            .from("ride_reviews")
+            .insert({
+                ride_id: ride.id,
+                reviewee_id,
+                reviewer_id: user_id,
+                rating,
+                comment: comment ? comment.trim() : null
+            })
+            .select()
+            .single()
+
+        if (reviewError?.code === "23505") {
+            return res.status(400).json({ success: false, message: "You have already reviewed this ride" });
+        }
+
+        if (reviewError) {
+            console.error("Error reviewing ride:", reviewError)
+            return res.status(500).json({ success: false, message: "Failed to review ride" })
+        }
+
+        return res.status(200).json({ success: true, message: "Ride reviewed successfully", review })
+    } catch (error) {
+        console.error("Error reviewing ride:", error)
+        return res.status(500).json({ success: false, message: "Failed to review ride", error: error.message })
+    }
+}
