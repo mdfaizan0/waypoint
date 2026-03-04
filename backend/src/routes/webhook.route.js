@@ -8,5 +8,10 @@ router.post(
     express.raw({ type: "application/json" }),
     webhookController.handleRazorpayWebhook
 )
+router.post(
+    "/clerk",
+    express.raw({ type: "application/json" }),
+    webhookController.handleClerkWebhook
+)
 
 export default router

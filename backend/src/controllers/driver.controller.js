@@ -182,3 +182,28 @@ export async function getDriverEarnings(req, res) {
         return res.status(500).json({ success: false, message: "Failed to fetch driver earnings" })
     }
 }
+
+export async function getDriverProfile(req, res) {
+    const userId = req.user.id
+    try {
+        const { data: driver, error: driverError } = await supabase
+            .from("driver_profiles")
+            .select("*")
+            .eq("user_id", userId)
+            .single()
+
+        if (driverError) {
+            console.log("Error fetching driver profile:", driverError)
+            return res.status(500).json({ success: false, message: "Failed to fetch driver profile" })
+        }
+
+        if (!driver) {
+            return res.status(404).json({ success: false, message: "Driver not found" })
+        }
+
+        return res.status(200).json({ success: true, driver })
+    } catch (error) {
+        console.log("Error fetching driver profile:", error)
+        return res.status(500).json({ success: false, message: "Failed to fetch driver profile" })
+    }
+}
