@@ -20,6 +20,7 @@ router.post('/:id/mark-paid', requireAuth(), authMiddleware, isDriver, rideContr
 router.post('/:id/cancel', requireAuth(), authMiddleware, rideController.cancelRide);
 router.post("/:id/review", requireAuth(), authMiddleware, rideController.reviewRide)
 
+router.get('/:id', requireAuth(), authMiddleware, rideController.getRideById);
 router.get("/history", requireAuth(), authMiddleware, rideController.getRideHistory)
 
 export default router;

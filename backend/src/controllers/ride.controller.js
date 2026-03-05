@@ -742,3 +742,44 @@ export async function getRideHistory(req, res) {
         return res.status(500).json({ success: false, message: "Failed to fetch ride history", error: error.message })
     }
 }
+
+export async function getRideById(req, res) {
+    const { id } = req.params
+    try {
+        const { data: ride, error: rideError } = await supabase
+            .from("rides")
+            .select(`
+                *,
+                rider:rider_id (
+                    id,
+                    name,
+                    email,
+                    rider_avg_rating,
+                    rider_rating_count
+                ),
+                driver:driver_id (
+                    id,
+                    name,
+                    email,
+                    driver_avg_rating,
+                    driver_rating_count,
+                    profile:driver_profiles (
+                        vehicle_number,
+                        license_number
+                    )
+                )
+            `)
+            .eq("id", id)
+            .single()
+
+        if (rideError) {
+            console.error("Error fetching ride by ID:", rideError)
+            return res.status(500).json({ success: false, message: "Failed to fetch ride by ID" })
+        }
+
+        return res.status(200).json({ success: true, message: "Ride fetched successfully", ride })
+    } catch (error) {
+        console.error("Error fetching ride by ID:", error)
+        return res.status(500).json({ success: false, message: "Failed to fetch ride by ID", error: error.message })
+    }
+}
