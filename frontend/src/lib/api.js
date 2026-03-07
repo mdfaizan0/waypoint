@@ -39,15 +39,28 @@ api.interceptors.response.use(
 
         return response;
     },
-    (error) => {
+    async (error) => {
         const { config } = error;
 
         if (error.response?.status === 401) {
-            console.error("Unauthorized request, clearing session...");
-            // Fire and forget offline request if it was likely a driver session
-            // We use a raw fetch to avoid axios interceptor looping
-            const baseUrl = ENV.API_BASE_URL;
-            fetch(`${baseUrl}/api/driver/go-offline`, { method: 'POST' }).catch(() => { });
+            const requestUrl = error.config?.url || "";
+            console.error("Unauthorized request:", requestUrl);
+
+            // Only fire the go-offline call for non-auth endpoints
+            // to avoid cascading on the initial profile fetch
+            if (!requestUrl.includes("/users/me") && _getToken) {
+                try {
+                    const token = await _getToken();
+                    const baseUrl = ENV.API_BASE_URL;
+                    fetch(`${baseUrl}/api/driver/go-offline`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                        }
+                    }).catch(() => { });
+                } catch (_) { /* token getter failed, skip */ }
+            }
         }
 
         const shouldSkip = config?.skipToast;

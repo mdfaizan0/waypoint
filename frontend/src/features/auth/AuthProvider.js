@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import { useAuth } from "@clerk/nextjs";
 import api, { setTokenGetter } from "@/lib/api";
 
@@ -17,14 +17,21 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [role, setRole] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    const fetchingRef = useRef(false);
 
     useEffect(() => {
         setTokenGetter(getToken);
     }, [getToken]);
 
     const fetchUserProfile = useCallback(async () => {
+        // Guard against concurrent/re-entrant calls
+        if (fetchingRef.current) return;
+        fetchingRef.current = true;
+
         try {
-            const response = await api.get("/users/me");
+            // skipToast prevents error toasts from triggering re-renders
+            // that would cause the effect to re-fire and loop infinitely
+            const response = await api.get("/users/me", { skipToast: true });
             if (response.data.success) {
                 const userData = response.data.user;
                 setUser({
@@ -41,6 +48,7 @@ export const AuthProvider = ({ children }) => {
             setRole(null);
         } finally {
             setIsLoading(false);
+            fetchingRef.current = false;
         }
     }, []);
 
